@@ -7,6 +7,7 @@ class PollsController < ApplicationController
     @auth2fses = Auth2fs.all
        #auth2fs = Auth2fs.find(params[:login]) 
     #@auth2fs = Auth2fs.where(login: params[:login]).first
+	  #1
 	#@polls = Auth2fs.all
     #@aaaa = "teststring"
     #Rails.logger.info "Repository for  "
