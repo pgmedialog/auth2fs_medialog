@@ -1,0 +1,342 @@
+<!--
+<script type="text/javascript" src="https://swork.lguplus.co.kr/common/js/Encrypt.js"></script>
+-->
+
+<script type="text/javascript">
+function SetCookie(cKey, cValue)  // name,pwd
+{
+    var date = new Date(); // 오늘 날짜 
+    // 만료시점 : 오늘날짜+10 설정
+    var validity = 365;
+    date.setDate(date.getDate() + validity);
+    // 쿠키 저장
+    document.cookie = cKey + '=' + escape(cValue) + ';expires=' + date.toGMTString();
+}
+
+function DelCookie(cKey) {
+    // 동일한 키(name)값으로
+    // 1. 만료날짜 과거로 쿠키저장
+    // 2. 만료날짜 설정 않는다. 
+    //    브라우저가 닫힐 때 제명이 된다    
+
+    var date = new Date(); // 오늘 날짜 
+    var validity = -1;
+    date.setDate(date.getDate() + validity);
+    document.cookie = cKey + "=;expires=" + date.toGMTString();
+}
+
+function GetCookie(cKey) {
+    var allcookies = document.cookie;
+    var cookies = allcookies.split("; ");
+    for (var i = 0; i < cookies.length; i++) {
+        var keyValues = cookies[i].split("=");
+        if (keyValues[0] == cKey) {
+            return unescape(keyValues[1]);
+        }
+    }
+    return "";
+}
+
+function doGet2fs(){
+//ajas call을 통해 qr코드및 설치 이메일을 발송한다
+
+		if(!effectiveness_Check()) return;
+    
+		$("#pwToEncrypt").val($("#password").val());
+		$(".loginWrap").append("<div id=\"progress\" style=\"position:absolute; margin:0 auto; z-index:100; top:40%; left:50%;\"><img src=\"http://swork.lguplus.co.kr/images/loader.gif\" alt=\"조회중\" width=\"16\" height=\"16\" /></div>");
+
+		$.ajax({			
+	            		type: "post",
+	           		url: "/2fs/sendAuth2fsEmail",
+	           		data : {username:$("#username").val(),password:$("#password").val(), pwToEncrypt:$("#pwToEncrypt").val()},
+	           		dataType:"text",
+	           		success: function(data, status){
+	        	   
+	        	   	//var obj = eval(data);
+	        	   		var result = data;   //#encryptText 
+	               		if (result != "false") {
+	               			if(result == "authfail") {
+	            	     				alert("인증에 실패 했습니다.");
+	            	     			} else {
+	            	     				$("#loginCertNum").focus();
+	            	     				alert(data + "로 이메일을 발송하였습니다.");	
+	            	     			}
+	            	     			
+	            	     		} 
+	            	   
+	               	},
+	               	error : function(){
+	               		alert("내부적인 에러가 발생했습니다 - 관리자에게 연락하세요")
+	               	},
+	               	timeout : 5000
+           		
+     		});
+
+		$(".loginWrap div").last().remove();
+}
+
+
+function doAuth(){
+    //validation을 넣는다
+     login_form.submit();
+}
+
+function doLogin() {
+	
+	if(!effectiveness_Check()) return;
+	if ($("#auth_key").val() == "") {
+		alert("OTP인증번호를 입력해주세요");
+	            	$("#auth_key").focus();
+		return;	
+	}
+	login_form.submit();
+        // bind form using 'ajaxForm'
+//        $('#bd_login_Bx').ajaxSubmit(options);
+}
+
+ 
+function showRequest(formData, jqForm, options) { 
+	$(".loginWrap").append('<div id=\"progress\" style=\"position:absolute; margin:0 auto; z-index:100; top:40%; left:50%;\"><img src=\"http://swork.lguplus.co.kr/images/loader.gif\" alt=\"조회중\" width=\"16\" height=\"16\" /></div>');
+} 
+ 
+// post-submit callback 
+function showResponse(xml)  { 
+	var result    = $(xml).find("data").find("result").text();
+    var resultStr = $(xml).find("data").find("resultStr").text();
+    if (result == $("#encryptText").val()) {
+        window.location.href ="http://swork.lguplus.co.kr/main.do";
+		//window.location.href = "http://swork.lguplus.co.kr/main.do";
+
+    } else {
+    	
+    	alert(resultStr);
+    	
+    	$("#loginid").attr("disabled", false);	$("#login_passnum").attr("disabled", false);
+    } 
+} 
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+function effectiveness_Check() {
+	var retvalue = true;
+	if ($("#username").val() == "") {
+		alert("ID를 확인해주세요");
+		$("#username").focus();
+		retvalue = false;
+	} else if ($("#password").val().length < 4) {
+		alert("Password를 확인해주세요");
+		$("#password").focus();
+		retvalue = false;
+	}
+	return retvalue;
+}
+
+function chkEnter(e) {
+	if ( e.keyCode == 13 ) {
+		document.getElementById("password").focus(); 
+		return false;
+	}
+}
+
+function chkEnter2(e) {
+	if ( e.keyCode == 13 ) {
+		phoneCertification();
+		
+		return false;
+	}
+}
+
+function chkEnter3(e) {
+	if ( e.keyCode == 13 ) {
+		LoginAction();
+		return false;
+	}
+}
+/*
+function saveLoginid(obj) {
+	if (obj.checked==true) {
+		SetCookie("username",document.getElementById("username").value);
+	}else if (obj.checked==false) {
+		DelCookie("username");
+	}
+}
+*/
+function init() {
+	/*
+	document.getElementById("loginid").value = GetCookie("loginid");
+	if (document.getElementById("loginid").value!="" && document.getElementById("loginid").value.length > 0) {
+		document.bd_login_Bx.saveIDchck.checked = true;
+		document.getElementById("login_passnum").focus(); 
+	}
+	*/
+	getLogin();
+}
+
+function phoneCertification() {
+	
+	if(!effectiveness_Check()) return;
+    
+	//if($("#phone_check").val() == "1" ) {
+	//	alert("이미 인증요청을 하셨습니다.");
+	//	return ;
+	//}
+	//sms auth send  //controller을 한개 구현해줘야함.
+
+
+//	$("#pwToEncrypt").val(hex_Encrypt($("#password").val()));
+	$("#pwToEncrypt").val($("#password").val());
+	$(".loginWrap").append("<div id=\"progress\" style=\"position:absolute; margin:0 auto; z-index:100; top:40%; left:50%;\"><img src=\"http://swork.lguplus.co.kr/images/loader.gif\" alt=\"조회중\" width=\"16\" height=\"16\" /></div>");
+
+	$.ajax({			
+           type: "post",
+           url: "/sms_auth/send",
+           data : {username:$("#username").val(),password:$("#password").val(), pwToEncrypt:$("#pwToEncrypt").val()},
+           dataType:"json",
+           success: function(data, status){
+        	   
+        	   var obj = eval(data);
+        	   var result = obj.data.result;   //#encryptText           
+        	   var certidx = obj.data.resultIdx;
+        	   var resultStr = obj.data.resultStr;
+               
+               if (result == $("#encryptText").val()) {
+            	      $("#phone_check").val("1");		       			
+            	      $("#certidx").val(certidx);       			
+            	     $("#username").attr("disabled", true);	
+            	     $("#password").attr("disabled", true);
+            	     $("#loginCertNum").focus();
+            	     alert(resultStr);
+            	     $("#loginCertNum").focus();
+            	} else if(result == "O") {
+				  $("#phone_check").val("1");	
+				  $("#loginCertNum").val("00000000")
+				  $("#loginid").attr("disabled", true);	
+            	  $("#login_passnum").attr("disabled", true);
+            	  alert(resultStr);
+            	  $("#loginCertNum").focus();
+            	} else if(result == "F") {
+  				  $("#phone_check").val("1");	
+  				  $("#certidx").val(resultIdx); 
+  				  $("#loginid").attr("disabled", true);	
+              	  $("#login_passnum").attr("disabled", true);
+              	  alert(resultStr);
+              	  $("#loginCertNum").focus();
+               } else {
+            	  $("#phone_check").val("0");	       			
+            	  $("#loginid").attr("disabled", false);	
+            	  $("#login_passnum").attr("disabled", false);        				       			
+            	  alert(resultStr);
+            	  $("#loginCertNum").focus();
+            	   
+               }
+               
+           }
+     });
+	
+	$(".loginWrap div").last().remove();
+	
+}
+
+function LoginAction() {
+	
+	if ($("#phone_check").val() == "0") {
+		alert("SMS 인증번호를 요청을 해주세요.");
+		return;
+	}else if ($("#loginCertNum").val() == "") {
+		alert("SMS 인증번호를 입력 하세요.");
+		return;
+	}
+	
+	
+	if(document.bd_login_Bx.saveIDchck.checked == true){ 
+		saveLogin(document.bd_login_Bx.loginid.value);
+	}else{ 
+		saveLogin("");
+	}
+	
+	$("#pwToEncrypt").val(hex_Encrypt($("#login_passnum").val()));
+	$(".loginWrap").append("<div id=\"progress\" style=\"position:absolute; margin:0 auto; z-index:100; top:40%; left:50%;\"><img src=\"/images/loader.gif\" alt=\"조회중\" width=\"16\" height=\"16\" /></div>");
+	
+	$.ajax({			
+           type: "post",
+           url: "/login.do",
+           data : {pid:"certification", certidx:$("#certidx").val()  , loginid:$("#loginid").val(), pwToEncrypt:$("#pwToEncrypt").val(), loginCertNum:$("#loginCertNum").val()},
+           dataType:"xml",
+           success: function(xml){
+        	   var result 	 = $(xml).find("result").text();
+               var resultIdx = $(xml).find("resultIdx").text();
+               var resultStr = $(xml).find("resultStr").text();
+        	  
+               if(result == "F") {
+            	   alert(resultStr);
+               } else {
+            	   showResponse(xml);	   
+               }
+           }
+     });
+	
+	$(".loginWrap div").last().remove();
+	
+}
+
+
+function confirmSave(checkbox){
+	if(checkbox.checked == true) {
+		saveLogin(document.bd_login_Bx.loginid.value);
+	}else {
+		saveLogin("");
+	}
+	
+}
+
+function setsave(name, value, expiredays)
+{
+	 var today = new Date();
+	 today.setDate( today.getDate() + expiredays );
+	 document.cookie = name + "=" + escape( value ) + "; path=/; expires=" + today.toGMTString() + ";"
+}
+
+function saveLogin(id)
+{
+	 if(id != "")
+	 {
+	  // userid 쿠키에 id 값을 7일간 저장
+	  setsave("userid", id, 7);
+	 }else{
+	  // userid 쿠키 삭제
+	  setsave("userid", id, -1);
+	 }
+}
+
+function getLogin()
+{
+	 // userid 쿠키에서 id 값을 가져온다.
+	 var cook = document.cookie + ";";
+	 var idx = cook.indexOf("userid", 0);
+	 var val = "";
+
+	 if(idx != -1){
+	  cook = cook.substring(idx, cook.length);
+	  begin = cook.indexOf("=", 0) + 1;
+	  end = cook.indexOf(";", begin);
+	  val = unescape( cook.substring(begin, end) );
+	 }
+	
+	 // 가져온 쿠키값이 있으면
+	 if(val!= ""){
+	  document.bd_login_Bx.loginid.value = val;
+	  document.bd_login_Bx.saveIDchck.checked = true;
+	  document.bd_login_Bx.login_passnum.focus();
+	 }
+	 else document.bd_login_Bx.loginid.focus(); 
+}
+
+$(document).ready(function(){
+
+	//$("#username").val("jatu");
+	//$("#password").val("jatu");
+
+});
+
+
+</script>
